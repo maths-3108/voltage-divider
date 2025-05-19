@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Voltage Divider Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      padding: 40px;
+    }
+    .container {
+      max-width: 520px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .formula {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 1.1em;
+      font-weight: bold;
+      background: #e6f2ff;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Voltage Divider Calculator</h2>
+    <div class="formula">
+      <img src="voltage_divider_formula.png" alt="Voltage Divider Formula" width="300">
+    </div>
+
+    <div class="form-group">
+      <label for="vin">Input Voltage (Vin):</label>
+      <input type="text" id="vin" placeholder="e.g., 12, 5k">
+    </div>
+
+    <div class="form-group">
+      <label for="vout">Output Voltage (Vout):</label>
+      <input type="text" id="vout" placeholder="e.g., 5, 2.5k">
+    </div>
+
+    <div class="form-group">
+      <label for="r1">Resistor R1:</label>
+      <input type="text" id="r1" placeholder="e.g., 1k, 470, 2.2M">
+    </div>
+
+    <div class="form-group">
+      <label for="r2">Resistor R2:</label>
+      <input type="text" id="r2" placeholder="e.g., 1k, 470, 2.2M">
+    </div>
+
+    <button onclick="solveVoltageDivider()">Calculate</button>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    function parseValue(val) {
+      if (!val) return NaN;
+      val = val.toLowerCase().replace(/\s+/g, '');
+      const multipliers = { 'k': 1e3, 'm': 1e-3, 'meg': 1e6, 'g': 1e9 };
+
+      if (val.includes('meg')) {
+        return parseFloat(val.replace('meg', '')) * 1e6;
+      }
+
+      const match = val.match(/^([\d.]+)([kmg]?)$/);
+      if (!match) return parseFloat(val);
+
+      const number = parseFloat(match[1]);
+      const suffix = match[2];
+      return number * (multipliers[suffix] || 1);
+    }
+
+    function solveVoltageDivider() {
+      const vinInput = parseValue(document.getElementById("vin").value);
+      const voutInput = parseValue(document.getElementById("vout").value);
+      const r1Input = parseValue(document.getElementById("r1").value);
+      const r2Input = parseValue(document.getElementById("r2").value);
+
+      const result = document.getElementById("result");
+
+      const known = [vinInput, voutInput, r1Input, r2Input].filter(x => !isNaN(x)).length;
+      if (known < 3) {
+        result.innerHTML = "Please enter at least three values.";
+        return;
+      }
+
+      let vin = vinInput, vout = voutInput, r1 = r1Input, r2 = r2Input;
+
+      if (isNaN(vout)) vout = vin * (r2 / (r1 + r2));
+      else if (isNaN(vin)) vin = vout * ((r1 + r2) / r2);
+      else if (isNaN(r1)) r1 = ((vin / vout) - 1) * r2;
+      else if (isNaN(r2)) r2 = (vout * r1) / (vin - vout);
+
+      result.innerHTML = `
+        <strong>Vin:</strong> ${vin.toFixed(3)} V<br>
+        <strong>Vout:</strong> ${vout.toFixed(3)} V<br>
+        <strong>R1:</strong> ${formatResistor(r1)} Ω<br>
+        <strong>R2:</strong> ${formatResistor(r2)} Ω
+      `;
+    }
+
+    function formatResistor(value) {
+      if (value >= 1e6) return (value / 1e6).toFixed(2) + ' M';
+      if (value >= 1e3) return (value / 1e3).toFixed(2) + ' k';
+      if (value < 1) return (value * 1e3).toFixed(2) + ' m';
+      return value.toFixed(2);
+    }
+  </script>
+</body>
+</html>
